@@ -13,11 +13,19 @@ namespace ConsoleSoftpayCloud
     {
         UpdateAccessToken,
         GetMerchants,
+        GetStores,
+        GetTerminals,
+        UseAppId,
+        MakePayment,
         Exit
     }
     private List<string> menuOptions = new List<string> (){ 
         "Update Access Token",
         "Get Merchants",
+        "Get Stores",
+        "Get Terminals",
+        "Use AppId",
+        "Make Payment",
         "Exit" 
     };
 
@@ -50,7 +58,7 @@ namespace ConsoleSoftpayCloud
                 Console.ReadKey();
                 ScrollToTop();
                 Console.SetCursorPosition(0, 0); 
-                for (int i = 0; i < menuOptions.Count + 2; i++) // Clear the area below the menu
+                for (int i = 0; i < menuOptions.Count + 3; i++) // Clear the area below the menu
                 {
                     Console.SetCursorPosition(0, i);
                     Console.WriteLine(new string(' ', Console.WindowWidth)); // Clear the line
@@ -72,6 +80,40 @@ namespace ConsoleSoftpayCloud
                 case (int)MenuOptions.GetMerchants:
                     ConsoleUI.DisplayInfoMessage("Get Merchants");
                     await impl.GetMerchantsAsync();
+                    break;
+
+                case (int)MenuOptions.GetStores:
+                    ConsoleUI.DisplayQueryMessage("Enter Merchant Reference:");
+                    string merchantref = QueryHandler.GetValueOrDefault<string>("MerchantRefernce: ", 
+                                                impl.MerchantReference);
+                    impl.MerchantReference = merchantref ?? "";
+                    await impl.GetStoresAsync();
+                    break;
+
+                case (int)MenuOptions.GetTerminals:
+                    ConsoleUI.DisplayQueryMessage("Enter StoreId:");
+                    string storeid = QueryHandler.GetValueOrDefault<string>("Store Id:", impl.StoreId);
+                    impl.StoreId = storeid ?? "";
+                    await impl.GetTerminalsAsync(storeid);
+                    break;
+
+                case (int)MenuOptions.UseAppId:
+                    string appid = QueryHandler.GetValueOrDefault<string>("AppId to use:", impl.AppId);
+                    impl.AppId = appid ?? "";
+                    break;
+                case (int)MenuOptions.MakePayment:
+                    ConsoleUI.DisplayInfoMessage($"Merchant reference: {impl.MerchantReference}");
+                    ConsoleUI.DisplayInfoMessage($"Store Id: {impl.StoreId}");
+                    ConsoleUI.DisplayInfoMessage($"App Id:   {impl.AppId}");
+                    if (string.IsNullOrEmpty(impl.AppId) || string.IsNullOrEmpty(impl.MerchantReference))
+                    {
+                        ConsoleUI.DisplayFailureMessage("Missing MerchantReference or AppId");
+                    } 
+                    else
+                    {
+                        int amount = GetAmountFromUser();
+                        impl.MakePayment(amount);
+                    }
                     break;
 
                 case (int)MenuOptions.Exit:

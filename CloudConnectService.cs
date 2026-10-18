@@ -22,23 +22,6 @@ namespace ConsoleSoftpayCloud
         private string? eventsuri;
         public Uri? EventsUri { get; private set; }
         public AccessToken AccessTokenObject { get; set; }
-        private string channelId = string.Empty;
-        public string ChannelId
-        {
-            get { return channelId; }
-            set
-            {
-                channelId = value;
-                if (nexouri != null)
-                {
-                    string? uri = nexouri?.Replace("#channelid#", ChannelId);
-                    NexoUri = new Uri(uri,UriKind.Relative);
-
-                    uri = eventsuri?.Replace("#channelid#", ChannelId);
-                    EventsUri = new Uri(uri,UriKind.Relative);
-                }
-            }
-        }
         private string merchantReference = string.Empty;
         public string MerchantReference { get { return merchantReference; } set { merchantReference = value; } }
         public CloudConnectService(IConfigService cfg)
@@ -47,12 +30,9 @@ namespace ConsoleSoftpayCloud
             if (Config != null)
             {
                 string? baseurl = Config?.GetValue(ConfigService.AppSettings.BaseURL);
-                nexouri = Config?.GetValue(ConfigService.AppSettings.NexoUri);
-                eventsuri = Config?.GetValue(ConfigService.AppSettings.EventsUri);
                 if (baseurl != null) { BaseURL = new Uri(baseurl); }
             }
             AccessTokenObject = new AccessToken(Config);
-            ChannelId = Config.GetValue(ConfigService.AppSettings.ChannelID);
             merchantReference = Config.GetValue(ConfigService.AppSettings.MerchantReference);
         }
         public bool IsAccessTokenValid
@@ -99,23 +79,6 @@ namespace ConsoleSoftpayCloud
             AccessTokenObject.UpdateAccessToken(responseString);
 
             return IsAccessTokenValid;
-        }
-        public bool HasChannelID()
-        {
-            return Config.GetValue(ConfigService.AppSettings.ChannelID) != string.Empty;
-        }
-        public bool StoreChannelId(string json)
-        {
-            JsonDocument j = JsonDocument.Parse(json);
-            if (j != null)
-            {
-                if (j.RootElement.TryGetProperty("channelId", out JsonElement Id))
-                {
-                    ChannelId = Id.ToString();
-                    Config?.StoreValue(ConfigService.AppSettings.ChannelID, Id.ToString());
-                }
-            }
-            return Config?.GetValue(ConfigService.AppSettings.ChannelID) != string.Empty;
         }
     }
 }

@@ -43,6 +43,7 @@ internal partial class Program
                 ConsoleUI.DisplayFailureMessage("Failed to retrieve access token.");
             }
         }
+        impl.Init();
         await new MainProcessLoop(impl).Run();
 
     }

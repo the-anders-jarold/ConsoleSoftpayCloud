@@ -21,16 +21,16 @@ namespace ConsoleSoftpayCloud
             get { return query; } 
             set { query.Add(value); } 
         }
-        internal string Content { get; set; }
+        internal string Content { get; set; } = string.Empty;
 
         protected HttpRequestMessage? Message = null;
 
         HttpClient httpClient;
-        private SoftpayRequest()
+        protected SoftpayRequest()
         {
 
         }
-        SoftpayRequest Build()
+        protected SoftpayRequest Build()
         {
             httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessToken);
@@ -47,7 +47,8 @@ namespace ConsoleSoftpayCloud
                 msg.Headers.Add("X-Softpay-Merchant-Reference", MerchantReference);
             if (!string.IsNullOrEmpty(Content))
             {
-                msg.Content = new StringContent(Content);
+                msg.Content = new StringContent(Content, Encoding.UTF8);
+                msg.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             }
             Message = msg;
 
@@ -96,6 +97,17 @@ namespace ConsoleSoftpayCloud
             }
             public SoftpayRequestBuilder SetMerchantReference(string merchantreference)
             {
+                request.MerchantReference = merchantreference;
+                return this;
+            }
+            public SoftpayRequestBuilder SetMethod(HttpMethod method)
+            {
+                request.Method = method;
+                return this;
+            }
+            public SoftpayRequestBuilder SetContent(string content)
+            {
+                request.Content = content;
                 return this;
             }
             public SoftpayRequest Build()

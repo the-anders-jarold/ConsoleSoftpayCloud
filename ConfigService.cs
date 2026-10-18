@@ -17,8 +17,8 @@ namespace ConsoleSoftpayCloud
     public class ConfigService : IConfigService
     {
 
-        public enum AppSettings { Secret, ClientId, AccessToken, ExpiresOn, RenewAt, Scope, GetTokenUrl, ChannelID, MerchantReference, BaseURL,
-            MerchantUri, NexoUri, EventsUri }
+        public enum AppSettings { Secret, ClientId, AccessToken, ExpiresOn, RenewAt, GetTokenUrl, MerchantReference, StoreId, AppId, BaseURL,
+            MerchantUri, StoresUri, TerminalsUri, TransactionsUri }
         private ExeConfigurationFileMap? configFileMap;
         private ConfigService() { }
 
@@ -49,8 +49,7 @@ namespace ConsoleSoftpayCloud
             if (new AppSettings[] { 
                 AppSettings.Secret, 
                 AppSettings.ClientId, 
-                AppSettings.AccessToken,
-                AppSettings.MerchantReference }
+                }
                 .Contains(name))
             {
                 byte[] secretBytes = Encoding.UTF8.GetBytes(value);
@@ -70,11 +69,10 @@ namespace ConsoleSoftpayCloud
 
             string value = config.AppSettings.Settings[name.ToString()].Value;
 
-            if (new AppSettings[] { 
-                AppSettings.Secret, 
-                AppSettings.ClientId, 
-                AppSettings.AccessToken,
-                AppSettings.MerchantReference }
+            if (new AppSettings[] {
+                AppSettings.Secret,
+                AppSettings.ClientId
+                }
                 .Contains(name))
             {
                 if (value != string.Empty)
