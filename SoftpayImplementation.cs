@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq.Expressions;
 using System.Text;
 using System.Text.Json;
 using System.Web;
@@ -66,6 +67,8 @@ namespace ConsoleSoftpayCloud
 
             }
         }
+        private string currentRequestId = string.Empty;
+        public string CurrentRequestId { get; set; }
 
         internal SoftpayImplementation(IConfigService cfg, ICloudConnectService connectService)
         {
@@ -176,11 +179,18 @@ namespace ConsoleSoftpayCloud
 
             return true;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="amount"></param>
+        /// <returns></returns>
         public async Task<bool> MakePayment(int amount)
         {
             string requestId = await CreatePayment();
             if (string.IsNullOrEmpty(requestId))
                 return false;
+
+            CurrentRequestId = requestId;
 
             var builder = new PaymentRequest.PaymentRequestBuilder(this);
             var request = builder.SetRequestId(requestId)
@@ -194,18 +204,67 @@ namespace ConsoleSoftpayCloud
 
             return true;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public async Task<bool> GetTransactionStatus()
+        {
+            var request = new TransactionRequest.TransactionRequestBuilder(this)
+                .SetRequestId(CurrentRequestId)
+                .Build();
+
+            var response = await request.SendAsync();
+            string responsestring = await response.Content.ReadAsStringAsync();
+            Console.WriteLine(responsestring);
+
+            return true;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public async Task<bool> GetReceipt()
+        {
+            var request = new ReceiptRequest.ReceiptRequestBuilder(this)
+                .SetRequestId(CurrentRequestId)
+                .Build();
+
+            var response = await request.SendAsync();
+            string responsestring = await response.Content.ReadAsStringAsync();
+            JsonNicely(responsestring);
+
+            return true;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public async Task<bool> AbortAsync()
+        {
+            if (CurrentRequestId != string.Empty)
+            {
+                var request = new AbortRequest.AbortRequestBuilder(this)
+                    .SetRequestId(CurrentRequestId)
+                    .Build();
+                var response = await request.SendAsync();
+                string responsestring = await response.Content.ReadAsStringAsync();
+                Console.WriteLine(responsestring);
+            }
+            return true;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         protected async Task<string> CreatePayment()
         {
             string result = string.Empty;
 
-            var builder = new SoftpayRequest.SoftpayRequestBuilder()
-                .SetBaseUrl(configService?.GetValue(ConfigService.AppSettings.BaseURL))
-                .SetUri(configService.GetValue(ConfigService.AppSettings.TransactionsUri))
-                .SetAccessToken(cloudConnectService.AccessTokenObject.Token)
-                .SetMethod(HttpMethod.Post)
-                .SetMerchantReference(MerchantReference);
-
-            var json = JsonSerializer.Serialize(
+            var builder = new TransactionRequest.TransactionRequestBuilder(this)
+                   .SetMethod(HttpMethod.Post);
+            
+                var json = JsonSerializer.Serialize(
                 new ConsoleSoftpayCloud.model.CreateTransaction() { Action = "PAYMENT" },
                 new JsonSerializerOptions
                 {
@@ -229,6 +288,20 @@ namespace ConsoleSoftpayCloud
                 ConsoleUI.DisplayFailureMessage($"Faild to get request Id: {responsestring}");
             }
             return result;
+        }
+        protected void JsonNicely(string json)
+        {
+            try
+            {
+                JsonDocument jdoc = JsonDocument.Parse(json);
+                var options = new JsonSerializerOptions() { WriteIndented = true };
+                Console.WriteLine(JsonSerializer.Serialize(jdoc.RootElement, options));
+            }
+            catch (Exception e)
+            {
+                ConsoleUI.DisplayFailureMessage(json);
+            }
+
         }
     }
 }

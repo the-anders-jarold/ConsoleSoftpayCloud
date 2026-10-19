@@ -39,49 +39,46 @@ namespace ConsoleSoftpayCloud
             public int HighTip { get; set; } = 100;
             public bool TipPrompt { get; set; } = true;
         }
-        void  Build()
+        protected void  Build()
         {
             base.Build();
             
         }
-        public class PaymentRequestBuilder : SoftpayRequestBuilder
+        public class PaymentRequestBuilder : TransactionRequest.TransactionRequestBuilder
         {
-            private PaymentRequest request = new PaymentRequest();
-            public PaymentRequestBuilder(ISoftpayImplementation impl) : base()
+            //private PaymentRequest request = new PaymentRequest();
+            public PaymentRequestBuilder(ISoftpayImplementation impl) : base(impl, (SoftpayRequest)new PaymentRequest())
             {
-                request.BaseUrl = impl.BaseUrl;
-                request.Uri = impl.TransactionUri;
-                request.Method = HttpMethod.Put;
-                request.AccessToken = impl.AccessToken;
-                request.MerchantReference = impl.MerchantReference;
-                request.AppId = impl.AppId;
+                ((PaymentRequest)request).Method = HttpMethod.Put;
+                ((PaymentRequest)request).AppId = impl.AppId;
             }
-            public PaymentRequestBuilder SetRequestId(string id)
+            public override PaymentRequestBuilder SetRequestId(string id)
             {
-                request.Uri = request.Uri + "/" + id;
+                base.SetRequestId(id);
                 return this;
             }
+
             public PaymentRequestBuilder SetAmount(int amount)
             {
-                request.Amount = amount;
+                ((PaymentRequest)request).Amount = amount;
                 return this;
             }
             public PaymentRequestBuilder SetCurrenceyCode(string code)
             {
-                request.CurrencyCode = code;
+                ((PaymentRequest)request).CurrencyCode = code;
                 return this;
             }
 
             public PaymentRequest Build()
             {
-                var json = JsonSerializer.Serialize(request,
+                var json = JsonSerializer.Serialize(request as PaymentRequest,
                     new JsonSerializerOptions
                     {
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                     });
                 request.Content = json;
-                request.Build();
-                return request;
+                base.Build();
+                return (PaymentRequest)request;
             }
         }
     }

@@ -63,7 +63,7 @@ namespace ConsoleSoftpayCloud
         }
         public class SoftpayRequestBuilder
         {
-            private SoftpayRequest request = null;
+            protected SoftpayRequest request = null;
 
             public SoftpayRequestBuilder()
             {
